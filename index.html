@@ -236,6 +236,13 @@
   .history-item .h-title { font-size: 13.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .history-item .h-meta { font-size: 11px; color: var(--text3); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
   .history-empty { text-align: center; padding: 40px 20px; color: var(--text3); font-size: 13px; }
+  .btn-clear-history {
+    margin: 0 12px 12px; padding: 11px; background: #ff6b6b15;
+    border: 1px solid #ff6b6b44; border-radius: 12px; color: #ff6b6b;
+    font-family: "Sora", sans-serif; font-size: 13.5px; font-weight: 500;
+    cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-clear-history:hover { background: #ff6b6b25; }
   .btn-new-chat {
     margin: 12px; padding: 11px; background: #7c6aff22;
     border: 1px solid #7c6aff44; border-radius: 12px; color: var(--accent2);
@@ -285,6 +292,7 @@
     <button class="icon-btn" onclick="closeSidebar()">✕</button>
   </div>
   <button class="btn-new-chat" onclick="newChat()">✦ Chat Baru</button>
+  <button class="btn-clear-history" onclick="clearHistory()">🗑 Hapus Semua Riwayat</button>
   <div class="sidebar-body" id="history-list"></div>
 </div>
 
@@ -369,7 +377,7 @@ const PERSONAS = {
   }
 };
 
-let apiKey = "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";
+let apiKey = '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';
 let userName = '';
 let currentPersona = 'default';
 let messages = [];
@@ -378,7 +386,10 @@ let currentChatId = null;
 let isLoading = false;
 
 function startApp() {
-  userName = "Kamu";
+  const name = document.getElementById('user-name-input').value.trim();
+  apiKey = atob('Z3NrX3IyV21ZWmltZDBoMkVUT1FPdTFrV0dkeWIzRllGRlFzSWh1dnlUbU5acDFHY1lvMFgyamF0');
+  userName = name || 'Tamu';
+  localStorage.setItem('nova_name', userName);
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('main-app').style.display = 'flex';
   newChat();
@@ -386,7 +397,7 @@ function startApp() {
 
 function logout() {
   if (confirm('Keluar dan hapus API Key?')) {
-    localStorage.removeItem('nova_key');
+    // key is hardcoded
     location.reload();
   }
 }
@@ -455,10 +466,29 @@ function renderHistory() {
     const date = new Date(c.time);
     const timeStr = date.toLocaleDateString('id-ID', { day:'numeric', month:'short' }) + ' · ' + date.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
     return `<div class="history-item ${c.id === currentChatId ? 'active' : ''}" onclick="loadChat('${c.id}')">
-      <div class="h-title">${escapeHtml(c.title)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="h-title" style="flex:1">${escapeHtml(c.title)}</div>
+        <span onclick="event.stopPropagation();deleteChat('${c.id}')" style="color:#ff6b6b;font-size:14px;padding:2px 6px;border-radius:6px;cursor:pointer">🗑</span>
+      </div>
       <div class="h-meta">${timeStr}</div>
     </div>`;
   }).join('');
+}
+
+function deleteChat(id) {
+  chatHistory = chatHistory.filter(c => c.id !== id);
+  localStorage.setItem('nova_history', JSON.stringify(chatHistory));
+  if (currentChatId === id) newChat();
+  renderHistory();
+}
+
+function clearHistory() {
+  if (confirm('Hapus semua riwayat chat?')) {
+    chatHistory = [];
+    localStorage.removeItem('nova_history');
+    renderHistory();
+    closeSidebar();
+  }
 }
 
 function openSidebar() {
@@ -572,7 +602,11 @@ function autoResize(el) {
 
 // AUTO LOGIN
 window.onload = () => {
-  startApp();
+  apiKey = atob('Z3NrX3IyV21ZWmltZDBoMkVUT1FPdTFrV0dkeWIzRllGUXNJaFV2eVRtTlpwMUdjWW8wWDJqYXQ=');
+  userName = localStorage.getItem('nova_name') || '';
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'flex';
+  newChat();
 };
 </script>
 </body>
